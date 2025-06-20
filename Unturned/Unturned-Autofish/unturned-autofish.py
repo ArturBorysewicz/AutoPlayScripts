@@ -7,24 +7,22 @@ import keyboard
 import customtkinter as ctk
 from tkinter import scrolledtext
 
-# Parameters
-THRESHOLD = 0.2  # Default threshold
-DURATION = 1  # Time duration to capture sound in seconds
-SAMPLE_RATE = 44100  # Standard sample rate
-COOLDOWN_TIME = 1.5  # Cooldown time in seconds to prevent multiple clicks in a short time
-mouse_down_duration = 1.9  # Default mouse down duration
-special_sequence_interval = 900  # Default special sequence interval (15 minutes)
+THRESHOLD = 0.2  
+DURATION = 1 
+SAMPLE_RATE = 44100  
+COOLDOWN_TIME = 1.5  
+mouse_down_duration = 1.9  
+special_sequence_interval = 900  
 
-# GUI variables
 is_leftclick_enabled = True
 is_special_sequence_enabled = False
 is_running = True
 last_click_time = 0
 is_click_in_progress = False
-is_special_sequence_running = False  # New flag to track eating sequence
+is_special_sequence_running = False  
 start_time = time.time()
-loud_noise_count = 0  # Counter for loud noises
-click_lock = threading.Lock()  # Lock for thread-safe operations
+loud_noise_count = 0  
+click_lock = threading.Lock()  
 
 def log_message(message):
     """Logs messages to the log box."""
@@ -113,20 +111,17 @@ def special_sequence():
     while True:
         current_time = time.time()
         
-        # Only proceed if both running and sequence enabled
         if not (is_running and is_special_sequence_enabled):
-            sequence_enabled_time = 0  # Reset when disabled
+            sequence_enabled_time = 0  
             time.sleep(1)
             continue
             
-        # Initialize sequence_enabled_time if this is the first run
         if sequence_enabled_time == 0:
             sequence_enabled_time = current_time
             log_message(f"Auto-eat enabled. First sequence will run in {special_sequence_interval//60} minute(s).")
             time.sleep(1)
             continue
             
-        # Check if it's time to run the sequence
         if (current_time - sequence_enabled_time >= special_sequence_interval and 
             current_time - last_run_time >= special_sequence_interval):
             
@@ -135,18 +130,16 @@ def special_sequence():
             try:
                 log_message("Starting auto-eat sequence...")
                 time.sleep(4)
-                # Food sequence
                 log_message("Pressing 4 (food)...")
                 pyautogui.keyDown('4')
                 time.sleep(0.1)
                 pyautogui.keyUp('4')
-                time.sleep(4)  # Shorter delay for key press to register
+                time.sleep(4) 
                 
                 log_message("Clicking to eat...")
                 pyautogui.click()
-                time.sleep(8)  # Eating time
+                time.sleep(8) 
                 
-                # Drink sequence
                 log_message("Pressing 5 (drink)...")
                 pyautogui.keyDown('5')
                 time.sleep(0.1)
@@ -155,28 +148,26 @@ def special_sequence():
                 
                 log_message("Clicking to drink...")
                 pyautogui.click()
-                time.sleep(8)  # Drinking time
+                time.sleep(8)
                 
-                # Return to fishing with proper casting
                 log_message("Equipping fishing rod...")
                 pyautogui.keyDown('3')
                 time.sleep(0.1)
                 pyautogui.keyUp('3')
-                time.sleep(1)  # Wait for rod to equip
+                time.sleep(1)  
                 
                 log_message("Casting fishing rod...")
                 pyautogui.mouseDown()
-                time.sleep(mouse_down_duration)  # Use the configured hold duration
+                time.sleep(mouse_down_duration)  n
                 pyautogui.mouseUp()
-                time.sleep(1)  # Small delay after casting
+                time.sleep(1)  
                 
                 log_message(f"Auto-eat sequence completed. Next in {special_sequence_interval//60} minutes.")
                 last_run_time = current_time
-                sequence_enabled_time = current_time  # Reset for next interval
+                sequence_enabled_time = current_time  
                 
             except Exception as e:
                 log_message(f"Error in sequence: {str(e)}")
-                # Attempt to recover fishing state
                 try:
                     pyautogui.keyDown('3')
                     time.sleep(0.1)
@@ -187,10 +178,9 @@ def special_sequence():
                     pyautogui.mouseUp()
                 except Exception as recovery_error:
                     log_message(f"Recovery also failed: {str(recovery_error)}")
-                # Reset timing to try again sooner
-                last_run_time = current_time - special_sequence_interval + 60  # Retry in 1 minute
+                last_run_time = current_time - special_sequence_interval + 60  
             finally:
-                time.sleep(2)  # Brief pause before resuming sound detection
+                time.sleep(2)  
                 is_special_sequence_running = False
                 log_message("Resuming sound detection")
         
@@ -199,7 +189,7 @@ def special_sequence():
 def detect_loud_sound(indata, frames, time_info, status):
     """Callback function to analyze audio in real-time."""
     global THRESHOLD, last_click_time, is_click_in_progress, loud_noise_count, is_special_sequence_running
-    if not is_running or is_special_sequence_running:  # Check if we should ignore sounds
+    if not is_running or is_special_sequence_running:  
         return
     
     volume_norm = np.linalg.norm(indata)
@@ -257,18 +247,14 @@ def select_game_audio(device_name):
     else:
         log_message(f"Device {device_name} not found.")
 
-# GUI Setup
 root = ctk.CTk()
 root.title("Sound Threshold Detector")
 
-# Start threads
 threading.Thread(target=update_timer, daemon=True).start()
 threading.Thread(target=special_sequence, daemon=True).start()
 
-# Sound level meter
 meter = ctk.CTkProgressBar(root, width=300, height=20, orientation="horizontal", mode="indeterminate")
 
-# Control panels
 threshold_label = ctk.CTkLabel(root, text=f"Default Sound Sensitivity: {THRESHOLD:.2f}")
 threshold_label.grid(row=1, column=0, padx=20, pady=0)
 
@@ -314,7 +300,6 @@ sequence_interval_entry.insert(0, f"{special_sequence_interval:.0f}")
 sequence_interval_entry.pack(side="left")
 sequence_interval_entry.bind("<Return>", lambda e: update_sequence_interval())
 
-# Checkboxes
 leftclick_var = ctk.BooleanVar(value=True)
 leftclick_checkbox = ctk.CTkCheckBox(root, text="Enable Left-click", variable=leftclick_var, command=toggle_leftclick)
 leftclick_checkbox.grid(row=7, column=0, padx=20, pady=10)
@@ -323,7 +308,6 @@ special_sequence_var = ctk.BooleanVar(value=False)
 special_sequence_checkbox = ctk.CTkCheckBox(root, text="Enable Auto Eat", variable=special_sequence_var, command=toggle_special_sequence)
 special_sequence_checkbox.grid(row=8, column=0, padx=20, pady=10)
 
-# Other UI elements
 bind_label = ctk.CTkLabel(root, text="Binds: Rod (3), Food (4), Drink (5)")
 bind_label.grid(row=9, column=0, padx=20, pady=5)
 
@@ -336,8 +320,6 @@ log_box = scrolledtext.ScrolledText(root, width=50, height=10, wrap="word", bg="
 log_box.grid(row=11, column=0, padx=20, pady=10)
 log_box.insert("end", "Log output:\n")
 
-# Keyboard hotkey
 keyboard.add_hotkey("F1", toggle_running)
 
-# Run application 111
 root.mainloop()
